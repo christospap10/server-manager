@@ -7,11 +7,14 @@ import com.example.servermanager.servermanager.service.ServerService;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
+import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 import java.io.IOException;
 import java.net.InetAddress;
 import java.util.Collection;
+import java.util.Random;
 
 @RequiredArgsConstructor
 @Service
@@ -23,7 +26,7 @@ public class ServerServiceImpl implements ServerService {
 
     @Override
     public Server create(Server server) {
-        log.info("Saving new server: {}" + server.getName()  );
+        log.info("Saving new server: {}", server.getName()  );
         server.setImgUrl(setServerImageUrl());
 
         return serverRepo.save(server);
@@ -32,7 +35,7 @@ public class ServerServiceImpl implements ServerService {
 
     @Override
     public Server ping(String ipAddress) throws IOException {
-        log.info("Pinging server IP: {}" + ipAddress);
+        log.info("Pinging server IP: {}", ipAddress);
         Server server = serverRepo.findByIpAddress(ipAddress);
         InetAddress address = InetAddress.getByName(ipAddress);
         server.setStatus(address.isReachable(10000) ? Status.SERVER_UP : Status.SERVER_DOWN);
@@ -42,24 +45,34 @@ public class ServerServiceImpl implements ServerService {
 
     @Override
     public Collection<Server> list(int limit) {
-        return null;
+        log.info("Fetching all servers");
+        return serverRepo.findAll(PageRequest.of(0, limit)).toList();
     }
 
     @Override
     public Server get(Long id) {
-        return null;
+        log.info("Fetching server by id: {}", id);
+        return  serverRepo.findById(id).get();
     }
 
     @Override
     public Server update(Server server) {
-        return null;
+        log.info("Updating server: {}", server.getName());
+        return serverRepo.save(server);
     }
 
     @Override
     public Boolean delete(Long id) {
-        return null;
+        log.info("Deleting server: {}", id);
+        serverRepo.deleteById(id);
+        return Boolean.TRUE;
     }
 
 
-    public String setServerImageUrl() {return null;}
+    public String setServerImageUrl() {
+        String[] imageNames = {"server1.png", "server2.png", "server.png", "server4.png"};
+        return ServletUriComponentsBuilder
+                .fromCurrentContextPath()
+                .path("/server/image/" + imageNames[new Random().nextInt(4)]).toUriString();
+    }
 }
